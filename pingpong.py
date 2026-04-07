@@ -157,12 +157,12 @@ class Button:
     def __init__(
         self,
         button_def,
-        img_off,
-        img_on,
+        img_off:pygame.Surface,
+        img_on:pygame.Surface,
         position,
         screen: pygame.Surface,
-        size_off=(250, 150),
-        mnog=1.2,
+        size_off=1,
+        size_on=1,
     ):
         self.screen = screen
         self.img_off = img_off
@@ -173,8 +173,8 @@ class Button:
         self.angle = 0
         self.button_def = button_def
         self.is_focus = False
-        self.size_off = size_off
-        self.size_on = ListToNums(ListMagic(size_off, mnog))
+        self.size_off = ListToNums(ListMagic((img_off.get_rect().width, img_off.get_rect().height), size_off))
+        self.size_on = ListToNums(ListMagic((img_on.get_rect().width, img_on.get_rect().height), size_on))
 
     def img(self):
         self.is_focus = self.rect.collidepoint(pygame.mouse.get_pos())
@@ -651,8 +651,8 @@ def get_block_img(block_scale, color=color):
     imgs[3] = pygame.transform.scale(imgs[3], (scale_x_on, scale_y_on))
     imgs[4] = pygame.transform.scale(imgs[4], (scale_x_off, scale_y_off))
     imgs[5] = pygame.transform.scale(imgs[5], (scale_x_on, scale_y_on))
-    imgs[6] = pygame.transform.scale(imgs[6], (scale_x_off, scale_y_off))
-    imgs[7] = pygame.transform.scale(imgs[7], (scale_x_on, scale_y_on))
+    imgs[6] = pygame.transform.scale(imgs[6], (scale_y_off, scale_y_off))
+    imgs[7] = pygame.transform.scale(imgs[7], (scale_y_on, scale_y_on))
     imgs[8] = pygame.transform.scale(imgs[8], (scale_x_off, scale_y_off))
     imgs[9] = pygame.transform.scale(imgs[9], (scale_x_on, scale_y_on))
     imgs[10] = pygame.transform.scale(imgs[10], (scale_y_off, scale_y_off))
