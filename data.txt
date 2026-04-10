@@ -1,1 +1,1 @@
-{'version': 1, 'default_color': 'RANDOM', 'nickname': 'Arsenka336', 'bg_color': [0, 0, 0], 'def_fps': 60, 'block_scale': 50, 'SCREEN_WIDTH_GAME': 16, 'SCREEN_HEIGHT_GAME': 10, 'ending_time': 0}
+{'version': 1, 'default_color': 'RANDOM', 'nickname': 'NoName', 'bg_color': [0, 0, 0], 'def_fps': 60, 'block_scale': 50, 'SCREEN_WIDTH_GAME': 16, 'SCREEN_HEIGHT_GAME': 10, 'ending_time': 0}

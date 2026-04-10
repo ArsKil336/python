@@ -1390,7 +1390,10 @@ def join_menu(args: dict):
     BUFFER_SIZE = 1024
     SERVER_ADDR = ("255.255.255.255", PORT)
     server.sendto(
-        encode({"nick": nickname, "p2_color": color, "p2_bg": BG_COLOR}), SERVER_ADDR
+        encode(
+            {"nick": all_settings.get("nickname"), "p2_color": color, "p2_bg": BG_COLOR}
+        ),
+        SERVER_ADDR,
     )
     time_wait = 2
     time_frame = 0.1
@@ -1417,7 +1420,7 @@ def join_menu(args: dict):
                     "address": SERVER_ADDR,
                     "p2_color": p2_color,
                     "p2_bg": p2_bg,
-                    "nick1": nickname,
+                    "nick1": all_settings.get("nickname"),
                     "nick2": nick_p2,
                 },
             )
@@ -1468,6 +1471,15 @@ def main_settings():
         pos=(int(screen.get_width() / 2), int(screen.get_height() / 2)),
     )
 
+    all_buttons = []
+
+    def back():
+        return (0, {"text_error": "Настройки сохранены"})
+
+    back_off_img2 = pygame.transform.scale(back_off_img, (50, 50))
+    back_on_img2 = pygame.transform.scale(back_on_img, (60, 60))
+    all_buttons.append(Button(back, back_off_img2, back_on_img2, (50, 50), screen))
+
     def save():
         try:
             with open("data.txt", "r") as file:
@@ -1488,12 +1500,21 @@ def main_settings():
     while y == None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                save()
                 return 0
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for button in all_buttons:
+                    if button.is_focus:
+                        return button.click()
         screen.fill(BG_COLOR)
         text.draw()
         nick_input.update()
-        nick_input.text_obj.rect.center=(int(screen.get_width() / 2), int(screen.get_height() / 2))
+        for button in all_buttons:
+            button.img()
+            button.draw()
+        nick_input.text_obj.rect.center = (
+            int(screen.get_width() / 2),
+            int(screen.get_height() / 2),
+        )
         all_settings["nickname"] = nick_input.text
         clock.tick(def_fps)
         pygame.display.flip()
@@ -1505,18 +1526,18 @@ def main():
     defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu, main_settings]
     n = defs[0]()
     while True:
-        try:
-            if type(n) is int:
-                n = defs[n]()
-            elif type(n) is tuple:
-                if len(n) == 1:
-                    n = defs[n[0]]()
-                else:
-                    n = defs[n[0]](args=n[1])
-            elif type(n) is str:
-                break
-        except:
-            n = defs[0](args={"text_error": "Неизвестная ошибка!"})
+        # try:
+        if type(n) is int:
+            n = defs[n]()
+        elif type(n) is tuple:
+            if len(n) == 1:
+                n = defs[n[0]]()
+            else:
+                n = defs[n[0]](args=n[1])
+        elif type(n) is str:
+            break
+    # except:
+    #     n = defs[0](args={"text_error": "Неизвестная ошибка!"})
 
 
 main()
