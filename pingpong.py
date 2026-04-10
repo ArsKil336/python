@@ -113,7 +113,14 @@ SCREEN_WIDTH = settings.get("SCREEN_WIDTH_GAME")
 SCREEN_HEIGHT = settings.get("SCREEN_HEIGHT_GAME")
 nickname = str(settings.get("nickname"))
 global all_settings
-all_settings={'nickname':nickname, 'block_scale':block_scale, 'def_fps':def_fps, 'server':server, 'SCREEN_WIDTH':SCREEN_WIDTH, 'SCREEN_HEIGHT':SCREEN_HEIGHT}
+all_settings = {
+    "nickname": nickname,
+    "block_scale": block_scale,
+    "def_fps": def_fps,
+    "server": server,
+    "SCREEN_WIDTH": SCREEN_WIDTH,
+    "SCREEN_HEIGHT": SCREEN_HEIGHT,
+}
 clock = pygame.time.Clock()
 pygame.font.init()
 
@@ -1275,7 +1282,7 @@ def decode(massage: bytes):
 
 
 def host_menu(PORT=None, y=None):
-    nickname=all_settings.get('nickname')
+    nickname = all_settings.get("nickname")
     pygame.init()
     PORT = randint(1000, 9999)
     HOST = "0.0.0.0"
@@ -1443,24 +1450,42 @@ def bye(time=end_time):
     # os.remove('data.txt')
     return "exit"
 
+
 def main_settings():
     pygame.init()
-    screen=pygame.display.set_mode((800, 400))
-    pygame.display.set_caption('Settings')
-    text=Text(screen, 'Введите никнейм:')
+    screen = pygame.display.set_mode((800, 400))
+    pygame.display.set_caption("Settings")
+    pygame.mouse.set_visible(True)
+    text = Text(screen, "Введите никнейм:")
     text.set_pos((400, 100))
-    nick_input=Input(15, False, 60, screen, def_fps, all_settings.get('nickname'), pos=(int(screen.get_width()/2), int(screen.get_height()/2)))
+    nick_input = Input(
+        15,
+        False,
+        60,
+        screen,
+        def_fps,
+        all_settings.get("nickname"),
+        pos=(int(screen.get_width() / 2), int(screen.get_height() / 2)),
+    )
+
     def save():
         try:
-            with open('data.txt', 'r') as file:
-                old_settings=to_dict(file.read())
-                old_settings['nickname']=nickname
-            with open('data.txt', 'w') as file:
-                file.write()
+            with open("data.txt", "r") as file:
+                old_settings = to_dict(file.read())
+                print(old_settings)
+                if nick_input.text != "":
+                    old_settings["nickname"] = nick_input.text
+                    all_settings["nickname"] = nick_input.text
+                print(old_settings)
+                file.close()
+            with open("data.txt", "w") as file:
+                file.write(str(old_settings))
+                file.close()
         except:
-            return (0, {'text_error': 'Ошибка при сохранении настроек!'})
-    y=None
-    while y==None:
+            return (0, {"text_error": "Ошибка при сохранении настроек!"})
+
+    y = None
+    while y == None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 save()
@@ -1468,10 +1493,13 @@ def main_settings():
         screen.fill(BG_COLOR)
         text.draw()
         nick_input.update()
-        all_settings['nickname']=nick_input.text
+        nick_input.text_obj.rect.center=(int(screen.get_width() / 2), int(screen.get_height() / 2))
+        all_settings["nickname"] = nick_input.text
         clock.tick(def_fps)
+        pygame.display.flip()
     save()
     return y
+
 
 def main():
     defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu, main_settings]
