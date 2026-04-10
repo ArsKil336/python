@@ -731,10 +731,10 @@ def game(
     pygame.mouse.set_visible(True)
 
     text_nick_p1 = Text(screen, nicks[0])
-    text_nick_p2 = Text(screen, nicks[1])
+    text_nick_p2 = Text(screen, nicks[1], color=p2_color)
 
     text_score_p1 = Text(screen)
-    text_score_p2 = Text(screen)
+    text_score_p2 = Text(screen, color=p2_color)
 
     sep_score = Text(screen, ":")
 
@@ -828,7 +828,9 @@ def game(
                 self.rect.bottom = self.max
 
     class Ball:
-        def __init__(self, image, speed, position_center, max: int = 3):
+        def __init__(self, image, speed, position_center, goal_def, underground, max: int = 3):
+            self.goal=goal_def
+            self.underground=underground
             self.max = max
             self.count_of_speed = 0
             self.image: pygame.Surface = image
@@ -943,6 +945,14 @@ def game(
                 self.cheat_rect()
             else:
                 self.new_rect_speed()
+            if self.rect.left<0:
+                self.underground()
+                if not(self.old_rect.left<0):
+                    self.goal(False)
+            elif self.rect.right>screen.get_width():
+                self.underground()
+                if not(self.old_rect.right>screen.get_width()):
+                    self.goal(True)
             self.draw()
 
         def draw(self):
@@ -1032,7 +1042,7 @@ def game(
             int((SCREEN_HEIGHT - 1) * block_scale / 2),
         ),
     ):
-        balls.append(Ball(ball_img, speed, position))
+        balls.append(Ball(ball_img, speed, position, goal_def=goal))
 
     bg_2 = pygame.Surface((SCREEN_WIDTH * block_scale, SCREEN_HEIGHT * block_scale))
     bg_2.fill(bg_2_color)
@@ -1052,7 +1062,15 @@ def game(
     )
     spawn_map()
     spawn_ball(start_speed_ball * (SCREEN_WIDTH - 2) / 14)
-
+    def goal(is_me):
+        if is_me:
+            score_p1+=1
+        else:
+            p2+=1
+        ball.set_visible(False)
+    def under():
+        pass
+        
     is_answered = False
     all_screen = pygame.display.set_mode((screen.get_width(), screen.get_height() + 60))
     status_bar = set_pos_status_bar()
