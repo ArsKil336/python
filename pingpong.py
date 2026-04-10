@@ -112,6 +112,8 @@ block_scale = settings.get("block_scale")
 SCREEN_WIDTH = settings.get("SCREEN_WIDTH_GAME")
 SCREEN_HEIGHT = settings.get("SCREEN_HEIGHT_GAME")
 nickname = str(settings.get("nickname"))
+global all_settings
+all_settings={'nickname':nickname, 'block_scale':block_scale, 'def_fps':def_fps, 'server':server, 'SCREEN_WIDTH':SCREEN_WIDTH, 'SCREEN_HEIGHT':SCREEN_HEIGHT}
 clock = pygame.time.Clock()
 pygame.font.init()
 
@@ -157,8 +159,8 @@ class Button:
     def __init__(
         self,
         button_def,
-        img_off:pygame.Surface,
-        img_on:pygame.Surface,
+        img_off: pygame.Surface,
+        img_on: pygame.Surface,
         position,
         screen: pygame.Surface,
         size_off=1,
@@ -173,8 +175,12 @@ class Button:
         self.angle = 0
         self.button_def = button_def
         self.is_focus = False
-        self.size_off = ListToNums(ListMagic((img_off.get_rect().width, img_off.get_rect().height), size_off))
-        self.size_on = ListToNums(ListMagic((img_on.get_rect().width, img_on.get_rect().height), size_on))
+        self.size_off = ListToNums(
+            ListMagic((img_off.get_rect().width, img_off.get_rect().height), size_off)
+        )
+        self.size_on = ListToNums(
+            ListMagic((img_on.get_rect().width, img_on.get_rect().height), size_on)
+        )
 
     def img(self):
         self.is_focus = self.rect.collidepoint(pygame.mouse.get_pos())
@@ -214,7 +220,7 @@ class Input:
         start_text="",
         color=color,
         pos=(0, 0),
-        interval_anim: float = 0.7,
+        interval_anim: float = 0.5,
     ):
         self.is_stick = True
         self.color = color
@@ -655,8 +661,8 @@ def get_block_img(block_scale, color=color):
     imgs[7] = pygame.transform.scale(imgs[7], (scale_y_on, scale_y_on))
     imgs[8] = pygame.transform.scale(imgs[8], (scale_x_off, scale_y_off))
     imgs[9] = pygame.transform.scale(imgs[9], (scale_x_on, scale_y_on))
-    imgs[10] = pygame.transform.scale(imgs[10], (scale_y_off, scale_y_off))
-    imgs[11] = pygame.transform.scale(imgs[11], (scale_y_on, scale_y_on))
+    imgs[10] = pygame.transform.scale(imgs[10], (50, 50))
+    imgs[11] = pygame.transform.scale(imgs[11], (60, 60))
     return imgs
 
 
@@ -900,7 +906,7 @@ def game(
                         elif self.vector == 4:
                             self.vector = 3
                 else:
-                    self.vector=5-self.vector
+                    self.vector = 5 - self.vector
                 if block_orig.speed != 0:
                     self.count_of_speed += 1
                 self.rect = self.old_rect
@@ -1185,6 +1191,9 @@ def start_menu(args: dict = {"text_error": ""}, y=None, FPS=30):
     def join():
         return 5
 
+    def settings():
+        return 6
+
     all_buttons.append(
         Button(
             button_def=host,
@@ -1203,6 +1212,7 @@ def start_menu(args: dict = {"text_error": ""}, y=None, FPS=30):
             screen=screen,
         )
     )
+    all_buttons.append(Button(settings, set_off_img, set_on_img, (750, 50), screen))
 
     while y == None:
         try:
@@ -1265,6 +1275,7 @@ def decode(massage: bytes):
 
 
 def host_menu(PORT=None, y=None):
+    nickname=all_settings.get('nickname')
     pygame.init()
     PORT = randint(1000, 9999)
     HOST = "0.0.0.0"
@@ -1432,9 +1443,38 @@ def bye(time=end_time):
     # os.remove('data.txt')
     return "exit"
 
+def main_settings():
+    pygame.init()
+    screen=pygame.display.set_mode((800, 400))
+    pygame.display.set_caption('Settings')
+    text=Text(screen, 'Введите никнейм:')
+    text.set_pos((400, 100))
+    nick_input=Input(15, False, 60, screen, def_fps, all_settings.get('nickname'), pos=(int(screen.get_width()/2), int(screen.get_height()/2)))
+    def save():
+        try:
+            with open('data.txt', 'r') as file:
+                old_settings=to_dict(file.read())
+                old_settings['nickname']=nickname
+            with open('data.txt', 'w') as file:
+                file.write()
+        except:
+            return (0, {'text_error': 'Ошибка при сохранении настроек!'})
+    y=None
+    while y==None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save()
+                return 0
+        screen.fill(BG_COLOR)
+        text.draw()
+        nick_input.update()
+        all_settings['nickname']=nick_input.text
+        clock.tick(def_fps)
+    save()
+    return y
 
 def main():
-    defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu]
+    defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu, main_settings]
     n = defs[0]()
     while True:
         try:
@@ -1448,7 +1488,7 @@ def main():
             elif type(n) is str:
                 break
         except:
-            n=defs[0](args={'text_error': 'Неизвестная ошибка!'})
+            n = defs[0](args={"text_error": "Неизвестная ошибка!"})
 
 
 main()
