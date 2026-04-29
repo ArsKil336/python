@@ -103,13 +103,12 @@ if color == "RANDOM":
     try:
         with open("colors.txt", "r") as file:
             colors = file.read().split("\n")
-            print(colors)
-            color = text_to_other(colors[randint(0, len(colors) - 1)])
     except:
         colors = "[6, 90, 117]\n[50, 120, 255]\n[255, 120, 50]\n[32, 128, 0]\n[255, 255, 255]\n[198, 53, 45]\n[228, 80, 141]"
         with open("colors.txt", "w") as file:
             file.write(colors)
-        color = colors[randint(0, len(colors) - 1)]
+        colors=colors.split('\n')
+    color = text_to_other(colors[randint(0, len(colors) - 1)])
 end_time = settings.get("ending_time")
 def_fps = settings.get("def_fps")
 block_scale = settings.get("block_scale")
