@@ -3,6 +3,10 @@ from random import randint
 from md import rangeList, ListMagic, ListToNums
 
 
+def null():
+    pass
+
+
 def text_to_other(text: str):
     if type(text) is str:
         if text[0] in "([" and text[-1] in ")]":
@@ -92,7 +96,7 @@ scale_y_on = 150 * 1.2
 pudding = 250 / 5
 server = None
 pygame.init()
-n = [0, {"text_error": f"version: {version}"}]
+n = [0, {"text_error": f"версия: {version}"}]
 BG_COLOR = settings.get("bg_color")
 color = settings.get("default_color")
 if color == "RANDOM":
@@ -722,8 +726,10 @@ def game(
     print(nicks)
     bg_2_color = text_to_other(args.get("p2_bg"))
     p2_img = get_block_img(block_scale, p2_color)[0]
-    score_p1 = 0
-    score_p2 = 0
+    global score_p1
+    score_p1 = [0]
+    global score_p2
+    score_p2 = [0]
     pygame.init()
     clock = pygame.time.Clock()
     screen = pygame.Surface((SCREEN_WIDTH * block_scale, SCREEN_HEIGHT * block_scale))
@@ -741,9 +747,12 @@ def game(
     status_bar = pygame.Surface((20, 60))
 
     def set_pos_status_bar(status_bar=status_bar):
-        if str(score_p1) != text_score_p1.text or str(score_p2) != text_score_p2.text:
-            text_score_p1.set_text(str(score_p1))
-            text_score_p2.set_text(str(score_p2))
+        if (
+            str(score_p1[0]) != text_score_p1.text
+            or str(score_p2[0]) != text_score_p2.text
+        ):
+            text_score_p1.set_text(str(score_p1[0]))
+            text_score_p2.set_text(str(score_p2[0]))
             max_width = max(
                 text_nick_p1.rect.width + text_score_p1.rect.width,
                 text_nick_p2.rect.width + text_score_p2.rect.width,
@@ -828,14 +837,16 @@ def game(
                 self.rect.bottom = self.max
 
     class Ball:
-        def __init__(self, image, speed, position_center, goal_def, underground, max: int = 3):
-            self.goal=goal_def
-            self.underground=underground
+        def __init__(
+            self, image, speed, position_center=screen.get_rect().center, goal_def=null, max: int = 3
+        ):
+            self.goal = goal_def
             self.max = max
             self.count_of_speed = 0
             self.image: pygame.Surface = image
             self.angle = 0
             self.speed = speed * block_scale / 8 * def_fps / FPS
+            self.speed2 = speed * block_scale / 8 * def_fps / FPS
             self.position = position_center
             self.rect: pygame.Rect = self.image.get_rect()
             self.rect.inflate_ip(0, 0)
@@ -849,14 +860,11 @@ def game(
         def set_visible(self, is_visible: bool):
             if self.is_visible != is_visible:
                 self.is_visible = is_visible
-                if is_visible:
-                    self.rect = self.image.get_rect()
-                    self.current_image = self.image
-                else:
-                    bg_square = pygame.Surface(self.rect)
-                    bg_square.fill(BG_COLOR)
-                    self.current_image = bg_square
-                    self.rect = bg_square.get_rect()
+                if not (is_visible):
+                    self.rect.center = screen.get_rect().center
+                    self.speed2 = self.speed
+                    self.speed = 0
+                    self.count_of_speed = 0
 
         def new_rect_speed(self):
             speed_now = int(self.speed + self.count_of_speed / self.max)
@@ -945,13 +953,11 @@ def game(
                 self.cheat_rect()
             else:
                 self.new_rect_speed()
-            if self.rect.left<0:
-                self.underground()
-                if not(self.old_rect.left<0):
+            if self.rect.left < 0:
+                if is_host:
                     self.goal(False)
-            elif self.rect.right>screen.get_width():
-                self.underground()
-                if not(self.old_rect.right>screen.get_width()):
+            elif self.rect.right > screen.get_width():
+                if is_host:
                     self.goal(True)
             self.draw()
 
@@ -1035,14 +1041,16 @@ def game(
                 )
                 blocks.append(block)
 
+    def new_round():
+        balls[0].speed = balls[0].speed2
+        balls[0].vector = randint(1, 4)
+        balls[0].set_visible(True)
+
     def spawn_ball(
         speed: int = 1,
-        position=(
-            int((SCREEN_WIDTH - 1) * block_scale / 2),
-            int((SCREEN_HEIGHT - 1) * block_scale / 2),
-        ),
     ):
-        balls.append(Ball(ball_img, speed, position, goal_def=goal))
+        balls.append(Ball(ball_img, speed, goal_def=None))
+        new_round()
 
     bg_2 = pygame.Surface((SCREEN_WIDTH * block_scale, SCREEN_HEIGHT * block_scale))
     bg_2.fill(bg_2_color)
@@ -1062,20 +1070,35 @@ def game(
     )
     spawn_map()
     spawn_ball(start_speed_ball * (SCREEN_WIDTH - 2) / 14)
+
+    global timer
+    timer = [0, null]
+
+    def wait(time: int | float, func):
+        timer[0] = time * FPS
+        timer[1] = func
+
     def goal(is_me):
         if is_me:
-            score_p1+=1
+            score_p1[0] += 1
         else:
-            p2+=1
-        ball.set_visible(False)
-    def under():
-        pass
-        
+            score_p2[0] += 1
+        balls[0].set_visible(False)
+        wait(3, new_round)
+
+    balls[0].goal = goal
+
     is_answered = False
     all_screen = pygame.display.set_mode((screen.get_width(), screen.get_height() + 60))
     status_bar = set_pos_status_bar()
     while y == None:
         if is_host:
+            if timer[0] >= 0:
+                timer[0] -= 1
+            if timer[0] < 0:
+                timer[0] = 0
+                timer[1]()
+                timer[1] = null
             datas = {
                 "pos_p1": [player[0].rect.x, player[0].rect.y],
                 "pos_ball": [balls[0].rect.x, balls[0].rect.y],
@@ -1083,6 +1106,8 @@ def game(
                 "speed_ball": balls[0].speed,
                 "vis_ball": balls[0].is_visible,
                 "is_cheat": balls[0].is_cheat_pos,
+                "p2": score_p1[0],
+                "p1": score_p2[0],
             }
             send(
                 server=server,
@@ -1158,6 +1183,8 @@ def game(
                     pos_p1 = data.get("pos_p1")
                     ball.set_visible(data.get("vis_ball"))
                     ball.is_cheat_pos = data.get("is_cheat")
+                    score_p1[0] = data.get("p1")
+                    score_p2[0] = data.get("p2")
                     for i in range(len(other_player)):
                         block: Block = other_player[i]
                         block.rect.x, block.rect.y = [
@@ -1544,18 +1571,18 @@ def main():
     defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu, main_settings]
     n = defs[0]()
     while True:
-        # try:
-        if type(n) is int:
-            n = defs[n]()
-        elif type(n) is tuple:
-            if len(n) == 1:
-                n = defs[n[0]]()
-            else:
-                n = defs[n[0]](args=n[1])
-        elif type(n) is str:
-            break
-    # except:
-    #     n = defs[0](args={"text_error": "Неизвестная ошибка!"})
+        try:
+            if type(n) is int:
+                n = defs[n]()
+            elif type(n) is tuple:
+                if len(n) == 1:
+                    n = defs[n[0]]()
+                else:
+                    n = defs[n[0]](args=n[1])
+            elif type(n) is str:
+                break
+        except:
+            n = defs[0](args={"text_error": "Неизвестная ошибка!"})
 
 
 main()
