@@ -140,7 +140,7 @@ class game:
                 self.y_axis = 0
 
             self.ax = self.speed * self.x_axis
-            if self.y_axis == -1 and not(self.is_grounded) and not(pg.sprite.spritecollideany(self, platforms)):
+            if keys[pg.K_s] and not(self.is_grounded) and not(pg.sprite.spritecollideany(self, platforms)):
                 self.ay = self.max_y
                 self.vy=self.ay
             else:
@@ -163,7 +163,7 @@ class game:
                 else:
                     self.vx = 0
 
-            if self.y_axis > 0 and self.is_grounded:
+            if not(keys[pg.K_s]) and self.is_grounded and keys[pg.K_w]:
                 self.vy = -self.jump_power
             else:
                 self.vy += self.ay
