@@ -121,28 +121,14 @@ class game:
             )
             self.collider.center = self.rect.center
             self.max_x = speed * 10
-            self.max_y = weight * 20
+            self.max_y = weight * 10
 
         def update(self):
-            printPlus(self.rect.center, self.vx, self.ax)
             keys = pg.key.get_pressed()
-            if keys[pg.K_d]:
-                self.x_axis = 1
-            elif keys[pg.K_a]:
-                self.x_axis = -1
-            else:
-                self.x_axis = 0
-            if keys[pg.K_w]:
-                self.y_axis = 1
-            elif keys[pg.K_s]:
-                self.y_axis = -1
-            else:
-                self.y_axis = 0
-
-            self.ax = self.speed * self.x_axis
-            if keys[pg.K_s] and not(self.is_grounded) and not(pg.sprite.spritecollideany(self, platforms)):
+            self.ax = self.speed * (0 + int(keys[pg.K_d]) - int(keys[pg.K_a]))
+            if keys[pg.K_s] and not (self.is_grounded):
                 self.ay = self.max_y
-                self.vy=self.ay
+                self.vy = self.ay
             else:
                 self.ay = self.weight
 
@@ -163,93 +149,104 @@ class game:
                 else:
                     self.vx = 0
 
-            if not(keys[pg.K_s]) and self.is_grounded and keys[pg.K_w]:
-                self.vy = -self.jump_power
-            else:
-                self.vy += self.ay
-                printPlus(self.ay)
-
-            if abs(self.vy) > self.max_y:
-                self.vy /= abs(self.vy) / self.max_y
             if abs(self.vx) > self.max_x:
                 self.vx /= abs(self.vx) / self.max_x
 
-            self.rect.x += self.vx
+            if not (keys[pg.K_s]) and self.is_grounded and keys[pg.K_w]:
+                self.ay = -self.jump_power
+            self.vy += self.ay
+
+            if abs(self.vy) > self.max_y:
+                self.vy /= abs(self.vy) / self.max_y
+
+            self.is_grounded = False
+
             self.rect.y += self.vy
-            self.collider.center = self.rect.center
-            collisions = []
-            for sprite in platforms:
-                if self.collider.colliderect(sprite.rect):
-                    collisions.append(sprite)
-            self.is_grounded=False
-            if collisions:
-                for collision in collisions:
-                    if abs(abs(self.rect.centerx - collision.rect.centerx) - int(
-                        (self.rect.width + collision.rect.width) / 2
-                    ))<abs(abs(self.rect.centery - collision.rect.centery) - int(
-                        (self.rect.height + collision.rect.height) / 2
-                    )):
-                        if self.rect.centerx < collision.rect.centerx:
-                            if self.ax > 0:
-                                self.ax = 0
-                            if self.vx > 0:
-                                self.vx = 0
-                            self.rect.right = collision.rect.left
-                        else:
-                            if self.ax < 0:
-                                self.ax = 0
-                            if self.vx < 0:
-                                self.vx = 0
-                            self.rect.left = collision.rect.right
-                    else:
-                        if self.rect.centery < collision.rect.centery:
-                            printPlus(self.ay,self.vy,brackets='""')
-                            if self.ay > 0:
-                                self.ay = 0
-                            if self.vy > 0:
+
+            collisions = 1
+            global old_colls
+            old_colls = []
+            while collisions:
+                collisions = pg.sprite.spritecollide(self, platforms, False)
+                if collisions:
+                    if collisions[0] not in old_colls:
+                        coll = collisions[0]
+                        old_colls.append(coll)
+                        if self.vy < 0:
+                            if not (coll.is_one_way):
+                                self.rect.top = coll.rect.bottom
                                 self.vy = 0
-                            self.rect.bottom = collision.rect.top
-                            if collision.rect.right>self.rect.left and collision.rect.left<self.rect.right:
+                        elif self.vy > 0:
+                            if not(coll.is_one_way) or self.rect.bottom-coll.rect.top<=self.vy:
+                                self.rect.bottom = coll.rect.top
+                                self.ay = 0
+                                self.vy = 0
                                 self.is_grounded = True
-                            else:
-                                self.is_grounded=False
-                        else:
-                            if self.ay < 0:
-                                self.ay = 0
-                            if self.vy < 0:
-                                self.vy = 0
-                            self.rect.top = collision.rect.bottom
-                            self.is_grounded = False
-            else:
-                self.is_grounded = False
-                
-            print(self.rect.center, "!")
+                    else:
+                        break
+
+            self.rect.x += self.vx
+
+            collisions = 1
+            old_colls = []
+            while collisions:
+                collisions = pg.sprite.spritecollide(self, platforms, False)
+                if collisions:
+                    index = randint(0, len(collisions) - 1)
+                    if collisions[index] not in old_colls:
+                        coll = collisions[index]
+                        old_colls.append(coll)
+                        if not (coll.is_one_way):
+                            if self.vx < 0:
+                                self.rect.left = coll.rect.right
+                                self.vx = 0
+                                self.ax = 0
+                            elif self.vx > 0:
+                                self.rect.right = coll.rect.left
+                                self.vx = 0
+                                self.ax = 0
+                    else:
+                        break
+
+    class platform(sprite):
+        def __init__(
+            self,
+            sprite_group,
+            default,
+            file_name_or_col,
+            size,
+            center,
+            is_one_way: bool,
+        ):
+            super().__init__(sprite_group, default, file_name_or_col, size, center)
+            self.is_one_way = is_one_way
 
     def start_game(self):
-        def new_sprite(
+        def new_plat(
             group: pg.sprite.Group,
             name_or_col=None,
             size=None,
             center=self.screen.get_rect().center,
+            is_one_way=False,
         ):
-            sprite=self.sprite(
+            sprite = self.platform(
                 sprite_group=group,
                 default=self.def_spr,
                 file_name_or_col=name_or_col,
                 size=size,
                 center=center,
+                is_one_way=is_one_way,
             )
             return sprite
-
 
         def new_hero(
             group: pg.sprite.Group,
             name_or_col=None,
             size=None,
             center=self.screen.get_rect().center,
-            speed=2,
-            weight=3,
-            jump_power=24,
+            speed=1.5,
+            weight=5,
+            jump_power=30,
             friction=4,
         ):
             self.hero(
@@ -264,25 +261,22 @@ class game:
                 friction=friction,
             )
 
-        new_hero(heroes, name_or_col="g", size=[55,100])  # игрок
-        new_sprite(platforms, name_or_col=[126,126,126], size=[2000, 200], center=[500, 480])
-        new_sprite(
-            platforms,
-            'y',
-            [100, 30],
-            [700, 300],
+        new_hero(heroes, name_or_col="g", size=[40, 70])  # игрок
+        new_plat(
+            platforms, name_or_col=[126, 126, 126], size=[2000, 200], center=[500, 480]
         )
-        new_sprite(
+        new_plat(platforms, "y", [100, 30], [700, 300], is_one_way=True)
+        new_plat(
             platforms,
-            'p',
+            "p",
             [100, 30],
             [300, 250],
         )
-        self.mouse=new_sprite(
+        new_plat(
             platforms,
-            'b',
-            [100, 30],
-            [300, 250],
+            "b",
+            [100, 1000],
+            [0, 250],
         )
 
         while self.is_running:
@@ -292,7 +286,6 @@ class game:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.is_running = False
-        self.mouse.rect.center=pg.mouse.get_pos()
         self.screen.fill([0, 0, 0])
         for sprite_group in self.sprites:
             sprite_group.draw(self.screen)

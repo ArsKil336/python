@@ -107,7 +107,7 @@ if color == "RANDOM":
         colors = "[6, 90, 117]\n[50, 120, 255]\n[255, 120, 50]\n[32, 128, 0]\n[255, 255, 255]\n[198, 53, 45]\n[228, 80, 141]"
         with open("colors.txt", "w") as file:
             file.write(colors)
-        colors=colors.split('\n')
+        colors = colors.split("\n")
     color = text_to_other(colors[randint(0, len(colors) - 1)])
 end_time = settings.get("ending_time")
 def_fps = settings.get("def_fps")
@@ -837,7 +837,12 @@ def game(
 
     class Ball:
         def __init__(
-            self, image, speed, position_center=screen.get_rect().center, goal_def=null, max: int = 3
+            self,
+            image,
+            speed,
+            position_center=screen.get_rect().center,
+            goal_def=null,
+            max: int = 3,
         ):
             self.goal = goal_def
             self.max = max
@@ -1364,8 +1369,8 @@ def host_menu(PORT=None, y=None):
     text = Text(text=f"port {PORT}!", screen=screen)
     text.set_pos((int(screen_w / 2), int(screen_h / 2) - 125))
 
-    text_p2 = Text(text="ожидание 2-о игрока...", screen=screen)
-    text_p2.set_pos((int(screen_w / 2), int(screen_h / 2 - 100)))
+    text_p2 = Text(text="Ожидание 2-о игрока...", screen=screen)
+    text_p2.set_pos((int(screen_w / 2), int(screen_h / 2 + 150)))
 
     while y == None:
         for event in pygame.event.get():
@@ -1375,16 +1380,12 @@ def host_menu(PORT=None, y=None):
                 for button in all_buttons:
                     if button.is_focus:
                         return button.click()
-        text.draw()
-        text_p2.draw()
         try:
             data, addr = server.recvfrom(BUFFER_SIZE)
             data = decode(data)
             nick_p2 = data.get("nick")
             p2_color = text_to_other(data.get("p2_color"))
             p2_bg = text_to_other(data.get("p2_bg"))
-            text_p2 = Text(screen=screen, text=f"p2: {nick_p2}")
-            text_p2.set_pos((int(screen_w / 2), int(screen_h / 2 - 100)))
             # Можно сразу отправить ответ обратно
             server.sendto(
                 encode(
@@ -1415,6 +1416,7 @@ def host_menu(PORT=None, y=None):
             return (0, {"text_error": error})
         screen.fill(BG_COLOR)
         text.draw()
+        text_p2.draw()
         for button in all_buttons:
             button.img()
             button.draw()
