@@ -30,9 +30,10 @@ class game:
         self.screen = pg.display.set_mode((self.screen_w, self.screen_h))
         pg.display.set_caption("HostMenu")
         self.clock = pg.time.Clock()
-        self.FPS = 30
+        self.FPS = 60
 
-        self.sprites = [platforms, heroes]
+        self.sprites = pg.sprite.Group()
+        self.sprite_groups = [platforms, heroes]
         self.is_running = True
         self.def_spr = {"col": self.def_col, "size": self.def_size}
 
@@ -44,6 +45,7 @@ class game:
             file_name_or_col,
             size,
             center,
+            all_sprites: pg.sprite.Group,
         ):
             self.def_col = default["col"]
             self.def_size = default["size"]
@@ -84,6 +86,7 @@ class game:
                     self.image.fill(self.def_col)
             self.rect = self.image.get_rect(center=center)
             self.add(sprite_group)
+            self.add(all_sprites)
 
         def update(self):
             pass
@@ -100,11 +103,13 @@ class game:
             weight,
             jump_power,
             friction,
+            all_sprites,
         ):
-            super().__init__(sprite_group, default, file_name_or_col, size, center)
+            super().__init__(
+                sprite_group, default, file_name_or_col, size, center, all_sprites
+            )
             self.speed = speed
             self.weight = weight
-            self.jump_power = jump_power
             self.vy = 0
             self.vx = 0
             self.ay = 0
@@ -113,15 +118,9 @@ class game:
             self.y_axis = 0
             self.is_grounded = False
             self.friction = friction
-            self.collider = pg.rect.Rect(
-                self.rect.left - 1,
-                self.rect.top - 1,
-                self.rect.width + 2,
-                self.rect.height + 2,
-            )
-            self.collider.center = self.rect.center
-            self.max_x = speed * 10
-            self.max_y = weight * 10
+            self.jump_power = jump_power
+            self.max_x = self.speed * 10
+            self.max_y = self.weight * 10
 
         def update(self):
             keys = pg.key.get_pressed()
@@ -177,7 +176,10 @@ class game:
                                 self.rect.top = coll.rect.bottom
                                 self.vy = 0
                         elif self.vy > 0:
-                            if not(coll.is_one_way) or self.rect.bottom-coll.rect.top<=self.vy:
+                            if (
+                                not (coll.is_one_way)
+                                or self.rect.bottom - coll.rect.top <= self.vy
+                            ):
                                 self.rect.bottom = coll.rect.top
                                 self.ay = 0
                                 self.vy = 0
@@ -217,8 +219,11 @@ class game:
             size,
             center,
             is_one_way: bool,
+            all_sprites,
         ):
-            super().__init__(sprite_group, default, file_name_or_col, size, center)
+            super().__init__(
+                sprite_group, default, file_name_or_col, size, center, all_sprites
+            )
             self.is_one_way = is_one_way
 
     def start_game(self):
@@ -236,6 +241,7 @@ class game:
                 size=size,
                 center=center,
                 is_one_way=is_one_way,
+                all_sprites=self.sprites,
             )
             return sprite
 
@@ -244,10 +250,10 @@ class game:
             name_or_col=None,
             size=None,
             center=self.screen.get_rect().center,
-            speed=1.5,
-            weight=5,
-            jump_power=30,
-            friction=4,
+            speed=1,
+            weight=2,
+            friction=2,
+            jump_power=20
         ):
             self.hero(
                 sprite_group=group,
@@ -259,24 +265,35 @@ class game:
                 weight=weight,
                 jump_power=jump_power,
                 friction=friction,
+                all_sprites=self.sprites,
             )
 
         new_hero(heroes, name_or_col="g", size=[40, 70])  # игрок
         new_plat(
-            platforms, name_or_col=[126, 126, 126], size=[2000, 200], center=[500, 480]
+            platforms,
+            name_or_col=[126, 126, 126],
+            size=[2000, 200],
+            center=[500, 480],
         )
-        new_plat(platforms, "y", [100, 30], [700, 300], is_one_way=True)
+        new_plat(platforms, "y", [65, 25], [700, 290], is_one_way=True)
         new_plat(
             platforms,
             "p",
             [100, 30],
-            [300, 250],
+            [450, 250],
+            is_one_way=False,
         )
         new_plat(
             platforms,
-            "b",
+            [126, 126, 126],
             [100, 1000],
             [0, 250],
+        )
+        new_plat(
+            platforms,
+            [126, 126, 126],
+            [100, 1000],
+            [self.screen_w, 250],
         )
 
         while self.is_running:
@@ -287,7 +304,7 @@ class game:
             if event.type == pg.QUIT:
                 self.is_running = False
         self.screen.fill([0, 0, 0])
-        for sprite_group in self.sprites:
+        for sprite_group in self.sprite_groups:
             sprite_group.draw(self.screen)
             sprite_group.update()
 

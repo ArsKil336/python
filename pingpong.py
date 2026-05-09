@@ -709,6 +709,8 @@ def game(
     address=None,
     FPS=120,
 ):
+    global is_bot_play
+    is_bot_play = False
     block_scale = args.get("block_scale")
     block_img, ball_img = get_block_img(block_scale)[:2]
     time_ask_current = 0
@@ -834,6 +836,10 @@ def game(
                 self.rect.top = self.min
             if self.rect.bottom > self.max:
                 self.rect.bottom = self.max
+
+        def bot_play(self, speed):
+            self.rect.y += speed
+            self.border()
 
     class Ball:
         def __init__(
@@ -1095,7 +1101,12 @@ def game(
     is_answered = False
     all_screen = pygame.display.set_mode((screen.get_width(), screen.get_height() + 60))
     status_bar = set_pos_status_bar()
+    last = True
     while y == None:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_b] and not (last):
+            is_bot_play = not (is_bot_play)
+        last = keys[pygame.K_b]
         if is_host:
             if timer[0] >= 0:
                 timer[0] -= 1
@@ -1208,7 +1219,18 @@ def game(
         screen.blit(bg_2, (int(SCREEN_WIDTH * block_scale / 2), 0))
 
         for block in blocks:
-            block.update()
+            if not (block in player) or not (CHEATS) or not (is_bot_play):
+                block.update()
+        if CHEATS and is_bot_play:
+            speed = (
+                balls[0].rect.centery
+                - (get_p_len(SCREEN_HEIGHT) * block_scale / 2
+                + player[0].rect.top)
+            )
+            for block in player:
+                block.bot_play(speed)
+                block.draw()
+
         for ball in balls:
             ball.update()
 
@@ -1369,7 +1391,7 @@ def host_menu(PORT=None, y=None):
     text = Text(text=f"port {PORT}!", screen=screen)
     text.set_pos((int(screen_w / 2), int(screen_h / 2) - 125))
 
-    text_p2 = Text(text="Ожидание 2-о игрока...", screen=screen)
+    text_p2 = Text(text="ожидание 2-о игрока...", screen=screen)
     text_p2.set_pos((int(screen_w / 2), int(screen_h / 2 + 150)))
 
     while y == None:
