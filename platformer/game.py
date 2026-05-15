@@ -47,6 +47,7 @@ class game:
             center,
             all_sprites: pg.sprite.Group,
         ):
+            self.old_rect=self.rect
             self.def_col = default["col"]
             self.def_size = default["size"]
             self.colors = {
@@ -89,7 +90,7 @@ class game:
             self.add(all_sprites)
 
         def update(self):
-            pass
+            self.old_rect = self.rect
 
     class hero(sprite):
         def __init__(
@@ -121,8 +122,10 @@ class game:
             self.jump_power = jump_power
             self.max_x = self.speed * 10
             self.max_y = self.weight * 10
+            self.can_collision = []
 
         def update(self):
+            super().update()
             keys = pg.key.get_pressed()
             self.ax = self.speed * (0 + int(keys[pg.K_d]) - int(keys[pg.K_a]))
             if keys[pg.K_s] and not (self.is_grounded):
@@ -171,11 +174,17 @@ class game:
                     if collisions[0] not in old_colls:
                         coll = collisions[0]
                         old_colls.append(coll)
-                        if self.vy < 0:
+                        if (
+                            self.old_rect.centery - self.rect.centery
+                            < coll.old_rect.centery - coll.rect.centery
+                        ):
                             if not (coll.is_one_way):
                                 self.rect.top = coll.rect.bottom
                                 self.vy = 0
-                        elif self.vy > 0:
+                        elif (
+                            self.old_rect.centery - self.rect.centery
+                            > coll.old_rect.centery - coll.rect.centery
+                        ):
                             if (
                                 not (coll.is_one_way)
                                 or self.rect.bottom - coll.rect.top <= self.vy
@@ -225,6 +234,11 @@ class game:
                 sprite_group, default, file_name_or_col, size, center, all_sprites
             )
             self.is_one_way = is_one_way
+            self.is_render=False
+            self.rend_col=self.def_col
+
+        def update(self):
+            return super().update()
 
     def start_game(self):
         def new_plat(
@@ -253,7 +267,7 @@ class game:
             speed=1,
             weight=2,
             friction=2,
-            jump_power=20
+            jump_power=20,
         ):
             self.hero(
                 sprite_group=group,
