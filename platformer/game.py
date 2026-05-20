@@ -30,7 +30,7 @@ class game:
         self.screen = pg.display.set_mode((self.screen_w, self.screen_h))
         pg.display.set_caption("HostMenu")
         self.clock = pg.time.Clock()
-        self.FPS = 60
+        self.FPS = 100
 
         self.sprites = pg.sprite.Group()
         self.sprite_groups = [platforms, heroes]
@@ -47,7 +47,8 @@ class game:
             center,
             all_sprites: pg.sprite.Group,
         ):
-            self.old_rect=self.rect
+            self.center = center
+            self.size = size
             self.def_col = default["col"]
             self.def_size = default["size"]
             self.colors = {
@@ -62,21 +63,27 @@ class game:
             if size == None:
                 size = self.def_size
             pg.sprite.Sprite.__init__(self)
+            self.set_color(file_name_or_col)
+            self.add(sprite_group)
+            self.add(all_sprites)
+            self.old_rect = self.rect
+
+        def set_color(self, file_name_or_col):
             if isinstance(file_name_or_col, (tuple, list)):
                 if len(file_name_or_col) in [3, 4]:
-                    col = file_name_or_col
+                    self.col = file_name_or_col
                 else:
-                    col = self.def_col
+                    self.col = self.def_col
             elif isinstance(file_name_or_col, str):
                 if file_name_or_col in self.colors.keys():
-                    col = self.colors[file_name_or_col]
+                    self.col = self.colors[file_name_or_col]
                 else:
-                    col = None
+                    self.col = None
             else:
-                col = self.def_col
-            if col != None:
-                self.image = pg.Surface(size=size)
-                self.image.fill(col)
+                self.col = self.def_col
+            if self.col != None:
+                self.image = pg.Surface(size=self.size)
+                self.image.fill(self.col)
             else:
                 try:
                     self.image = pg.transform.scale(
@@ -85,12 +92,11 @@ class game:
                 except:
                     self.image = pg.Surface(size=size)
                     self.image.fill(self.def_col)
-            self.rect = self.image.get_rect(center=center)
-            self.add(sprite_group)
-            self.add(all_sprites)
+            self.rect = self.image.get_rect(center=self.center)
+            self.old_rect_center = self.rect.center
 
         def update(self):
-            self.old_rect = self.rect
+            self.old_rect_center = self.rect.center
 
     class hero(sprite):
         def __init__(
@@ -105,6 +111,8 @@ class game:
             jump_power,
             friction,
             all_sprites,
+            max_y,
+            max_x,
         ):
             super().__init__(
                 sprite_group, default, file_name_or_col, size, center, all_sprites
@@ -120,8 +128,8 @@ class game:
             self.is_grounded = False
             self.friction = friction
             self.jump_power = jump_power
-            self.max_x = self.speed * 10
-            self.max_y = self.weight * 10
+            self.max_x = max_x
+            self.max_y = max_y
             self.can_collision = []
 
         def update(self):
@@ -164,7 +172,6 @@ class game:
             self.is_grounded = False
 
             self.rect.y += self.vy
-
             collisions = 1
             global old_colls
             old_colls = []
@@ -175,15 +182,15 @@ class game:
                         coll = collisions[0]
                         old_colls.append(coll)
                         if (
-                            self.old_rect.centery - self.rect.centery
-                            < coll.old_rect.centery - coll.rect.centery
+                            self.old_rect_center[1] - self.rect.centery
+                            > coll.old_rect_center[1] - coll.rect.centery
                         ):
                             if not (coll.is_one_way):
                                 self.rect.top = coll.rect.bottom
                                 self.vy = 0
                         elif (
-                            self.old_rect.centery - self.rect.centery
-                            > coll.old_rect.centery - coll.rect.centery
+                            self.old_rect_center[1] - self.rect.centery
+                            < coll.old_rect_center[1] - coll.rect.centery
                         ):
                             if (
                                 not (coll.is_one_way)
@@ -208,12 +215,18 @@ class game:
                         coll = collisions[index]
                         old_colls.append(coll)
                         if not (coll.is_one_way):
-                            if self.vx < 0:
-                                self.rect.left = coll.rect.right
+                            if (
+                                self.old_rect_center[0] - self.rect.centerx
+                                < coll.old_rect_center[0] - coll.rect.centerx
+                            ):
+                                self.rect.right = coll.rect.left
                                 self.vx = 0
                                 self.ax = 0
-                            elif self.vx > 0:
-                                self.rect.right = coll.rect.left
+                            elif (
+                                self.old_rect_center[0] - self.rect.centerx
+                                > coll.old_rect_center[0] - coll.rect.centerx
+                            ):
+                                self.rect.left = coll.rect.right
                                 self.vx = 0
                                 self.ax = 0
                     else:
@@ -234,11 +247,10 @@ class game:
                 sprite_group, default, file_name_or_col, size, center, all_sprites
             )
             self.is_one_way = is_one_way
-            self.is_render=False
-            self.rend_col=self.def_col
+            self.is_render = False
 
         def update(self):
-            return super().update()
+            super().update()
 
     def start_game(self):
         def new_plat(
@@ -264,10 +276,12 @@ class game:
             name_or_col=None,
             size=None,
             center=self.screen.get_rect().center,
-            speed=1,
-            weight=2,
-            friction=2,
-            jump_power=20,
+            speed=0.4,
+            weight=1,
+            friction=1,
+            jump_power=15,
+            max_y=40,
+            max_x=6,
         ):
             self.hero(
                 sprite_group=group,
@@ -280,6 +294,8 @@ class game:
                 jump_power=jump_power,
                 friction=friction,
                 all_sprites=self.sprites,
+                max_y=max_y,
+                max_x=max_x,
             )
 
         new_hero(heroes, name_or_col="g", size=[40, 70])  # игрок
@@ -309,7 +325,7 @@ class game:
             [100, 1000],
             [self.screen_w, 250],
         )
-
+        self.mouse = new_plat(platforms, "r", [100, 30])
         while self.is_running:
             self.update()
 
@@ -321,6 +337,8 @@ class game:
         for sprite_group in self.sprite_groups:
             sprite_group.draw(self.screen)
             sprite_group.update()
+        self.mouse.rect.center = pg.mouse.get_pos()
+        printPlus(self.mouse.rect.centerx-self.mouse.old_rect_center[0],self.mouse.rect.centery-self.mouse.old_rect_center[1])
 
         pg.display.update()
         self.clock.tick(self.FPS)
