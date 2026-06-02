@@ -235,7 +235,7 @@ def ToStr(value):
         return str(value)
 
 
-def ListMagic(list: list | tuple, value, operation="*"):
+def ListMagic(list: list or tuple, value, operation="*"):
     type_now = type(list)
     new_list = []
     for el in list:
