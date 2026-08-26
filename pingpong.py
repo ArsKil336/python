@@ -1157,10 +1157,9 @@ def game(
             except ConnectionResetError:
                 server.close()
                 return (0, {"text_error": "клиент покинул игру!"})
-            finally:
-                if time_answer_current >= time_answer:
-                    server.close()
-                    return (0, {"text_error": "клиент не отвечает"})
+            if time_answer_current >= time_answer:
+                server.close()
+                return (0, {"text_error": "клиент не отвечает"})
         else:
             data = ""
             try:
