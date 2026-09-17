@@ -219,6 +219,31 @@ class Button:
         return self.button_def()
 
 
+class new_button(Button):
+    def __init__(
+        self,
+        button_def,
+        img_off: str,
+        img_on: str,
+        position,
+        screen,
+        size_off=(50, 50),
+        size_on=(60, 60),
+        text="",
+    ):
+        img_off = get_colored_png(img_off, color, size_off)
+        img_on = get_colored_png(img_on, color, size_on)
+        if text != "":
+            img_off: pygame.Surface
+            text1 = Text(img_off, text)
+            text2 = Text(img_on, text)
+            text1.set_pos((img_off.get_size()[0] // 2, img_off.get_size()[1] // 2))
+            text2.set_pos((img_on.get_size()[0] // 2, img_on.get_size()[1] // 2))
+            text1.draw()
+            text2.draw()
+        super().__init__(button_def, img_off, img_on, position, screen, 1, 1)
+
+
 class Input:
     def __init__(
         self,
@@ -359,12 +384,14 @@ def join_input_menu(args: dict = dict(), y: int = None, FPS=30):
         return (2, {"PORT": PORT})
 
     all_buttons.append(
-        Button(
-            button_def=host,
-            img_off=back_off_img,
-            img_on=back_on_img,
-            position=(225, 225),
-            screen=screen,
+        new_button(
+            host,
+            "back_off.png",
+            "back_on.png",
+            (225, 225),
+            screen,
+            (scale_y_off, scale_y_off),
+            (scale_y_on, scale_y_on),
         )
     )
     all_buttons.append(
@@ -408,6 +435,15 @@ def join_input_menu(args: dict = dict(), y: int = None, FPS=30):
         pygame.display.flip()
         clock.tick(FPS)
     return y
+
+
+def get_colored_png(path: str, color: tuple, size):
+    image = pygame.image.load(path).convert_alpha()
+    colored_image = pygame.Surface(image.get_size()).convert_alpha()
+    colored_image.fill(color)
+    image.blit(colored_image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    image = pygame.transform.scale(image, size)
+    return image
 
 
 def get_block_img(block_scale, color=color):
@@ -605,48 +641,7 @@ def get_block_img(block_scale, color=color):
         [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
         [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     ]
-    set_off_map = [
-        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 3, 3, 0, 3, 0, 4, 0, 4, 4, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 2, 0, 0, 3, 3, 0, 3, 4, 0, 0, 4, 0, 0, 0, 2],
-        [2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 2, 0, 0, 3, 3, 3, 0, 0, 4, 0, 0, 0, 0, 2],
-        [2, 0, 0, 2, 2, 2, 0, 1, 3, 0, 3, 3, 0, 3, 4, 4, 0, 0, 2],
-        [2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 2],
-        [2, 0, 0, 1, 1, 1, 0, 1, 1, 0, 3, 3, 0, 3, 3, 3, 0, 0, 2],
-        [2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 3, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2],
-        [2, 0, 0, 0, 1, 0, 0, 1, 1, 0, 2, 2, 0, 0, 3, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 1, 1, 0, 1, 0, 2, 0, 2, 2, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    ]
-    set_on_map = [
-        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-        [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
-        [3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 0, 0, 0, 3, 3, 4, 0, 0, 0, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 3, 3, 0, 3, 0, 4, 0, 4, 4, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 2, 0, 0, 3, 3, 0, 3, 4, 0, 0, 4, 0, 0, 2, 3],
-        [3, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 2, 0, 0, 3, 3, 3, 0, 0, 4, 0, 0, 0, 2, 3],
-        [3, 2, 0, 2, 2, 2, 0, 1, 3, 0, 3, 3, 0, 3, 4, 4, 0, 2, 3],
-        [3, 2, 0, 1, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 3, 0, 2, 3],
-        [3, 2, 0, 1, 1, 1, 0, 1, 1, 0, 3, 3, 0, 3, 3, 3, 0, 2, 3],
-        [3, 2, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 3, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 3],
-        [3, 2, 0, 0, 1, 0, 0, 1, 1, 0, 2, 2, 0, 0, 3, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 1, 1, 0, 1, 0, 2, 0, 2, 2, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 2, 3],
-        [3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3],
-        [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
-        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-    ]
+
     imgs = [
         get_img(block_map),
         get_img(ball_map),
@@ -654,12 +649,10 @@ def get_block_img(block_scale, color=color):
         get_img(host_on_map),
         get_img(join_off_map),
         get_img(join_on_map),
-        get_img(back_off_map),
-        get_img(back_on_map),
+        0,
+        0,
         get_img(go_off_map),
         get_img(go_on_map),
-        get_img(set_off_map),
-        get_img(set_on_map),
     ]
     imgs[0] = pygame.transform.scale(imgs[0], (block_scale, block_scale))
     imgs[1] = pygame.transform.scale(imgs[1], (block_scale, block_scale))
@@ -667,12 +660,8 @@ def get_block_img(block_scale, color=color):
     imgs[3] = pygame.transform.scale(imgs[3], (scale_x_on, scale_y_on))
     imgs[4] = pygame.transform.scale(imgs[4], (scale_x_off, scale_y_off))
     imgs[5] = pygame.transform.scale(imgs[5], (scale_x_on, scale_y_on))
-    imgs[6] = pygame.transform.scale(imgs[6], (scale_y_off, scale_y_off))
-    imgs[7] = pygame.transform.scale(imgs[7], (scale_y_on, scale_y_on))
     imgs[8] = pygame.transform.scale(imgs[8], (scale_x_off, scale_y_off))
     imgs[9] = pygame.transform.scale(imgs[9], (scale_x_on, scale_y_on))
-    imgs[10] = pygame.transform.scale(imgs[10], (50, 50))
-    imgs[11] = pygame.transform.scale(imgs[11], (60, 60))
     return imgs
 
 
@@ -681,12 +670,8 @@ host_off_img = imgs[2]
 host_on_img = imgs[3]
 join_off_img = imgs[4]
 join_on_img = imgs[5]
-back_off_img = imgs[6]
-back_on_img = imgs[7]
 go_off_img = imgs[8]
 go_on_img = imgs[9]
-set_off_img = imgs[10]
-set_on_img = imgs[11]
 
 
 def game(
@@ -1221,10 +1206,8 @@ def game(
             if not (block in player) or not (CHEATS) or not (is_bot_play):
                 block.update()
         if CHEATS and is_bot_play:
-            speed = (
-                balls[0].rect.centery
-                - (get_p_len(SCREEN_HEIGHT) * block_scale / 2
-                + player[0].rect.top)
+            speed = balls[0].rect.centery - (
+                get_p_len(SCREEN_HEIGHT) * block_scale / 2 + player[0].rect.top
             )
             for block in player:
                 block.bot_play(speed)
@@ -1252,14 +1235,11 @@ def start_menu(args: dict = {"text_error": ""}, y=None, FPS=30):
     pygame.mouse.set_visible(True)
     if text_error != "":
         text = Text(screen=screen, text=text_error)
-        text.set_pos((int(screen_w / 2), int(screen_h / 2) - 125))
+        text.set_pos((screen_w // 2, screen_h // 2 - 125))
     else:
         text = Text(screen=screen, text=f"version {version}")
-        text.set_pos((int(screen_w / 2), int(screen_h / 2) - 125))
-    pygame.display.set_caption("Menu")
-    pygame.mouse.set_visible(True)
+        text.set_pos((screen_w // 2, screen_h // 2 - 125))
 
-    global all_buttons
     all_buttons = []
 
     def host():
@@ -1289,7 +1269,17 @@ def start_menu(args: dict = {"text_error": ""}, y=None, FPS=30):
             screen=screen,
         )
     )
-    all_buttons.append(Button(settings, set_off_img, set_on_img, (750, 50), screen))
+    all_buttons.append(
+        new_button(
+            settings,
+            "set_off.png",
+            "set_on.png",
+            (750, 50),
+            screen,
+            [100, 100],
+            [120, 120],
+        )
+    )
 
     while y == None:
         try:
@@ -1521,7 +1511,7 @@ def bye(time=end_time):
     return "exit"
 
 
-def main_settings():
+def nick_settings():
     pygame.init()
     screen = pygame.display.set_mode((800, 400))
     pygame.display.set_caption("Settings")
@@ -1541,33 +1531,38 @@ def main_settings():
     all_buttons = []
 
     def back():
-        return (0, {"text_error": "Настройки сохранены"})
+        return (6, {"text_error": "Никнейм изменён"})
 
-    back_off_img2 = pygame.transform.scale(back_off_img, (50, 50))
-    back_on_img2 = pygame.transform.scale(back_on_img, (60, 60))
-    all_buttons.append(Button(back, back_off_img2, back_on_img2, (50, 50), screen))
+    all_buttons.append(
+        new_button(back, "back_off.png", "back_on.png", (50, 50), screen)
+    )
 
     def save():
-        try:
-            with open("data.txt", "r") as file:
+        with open("data.txt", "r") as file:
+            try:
                 old_settings = to_dict(file.read())
                 print(old_settings)
-                if nick_input.text != "":
-                    old_settings["nickname"] = nick_input.text
-                    all_settings["nickname"] = nick_input.text
-                print(old_settings)
-                file.close()
+            except:
+                return (6, {"text_error": "Ошибка чтения данных!"})
+            if nick_input.text != "":
+                old_settings["nickname"] = nick_input.text
+                all_settings["nickname"] = nick_input.text
+            else:
+                return (6, {"error_text": "Вы не ввели никнейм!"})
+            print(old_settings)
+            file.close()
+        try:
             with open("data.txt", "w") as file:
                 file.write(str(old_settings))
                 file.close()
         except:
-            return (0, {"text_error": "Ошибка при сохранении настроек!"})
+            return (0, {"text_error": "Ошибка сохранения настроек!"})
 
     y = None
     while y == None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return 0
+                return 'exit'
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in all_buttons:
                     if button.is_focus:
@@ -1589,22 +1584,82 @@ def main_settings():
     return y
 
 
+def main_settings(args: dict = dict()):
+    text_error = args.get("text_error")
+    pygame.init()
+    screen = pygame.display.set_mode((800, 400))
+    pygame.display.set_caption("Settings")
+    pygame.mouse.set_visible(True)
+    text_error = Text(screen, text_error)
+
+    def open_nick_edit():
+        return 7
+    def back():
+        return 0
+
+    buttons = [
+        new_button(
+            back,
+            "back_off.png",
+            "back_on.png",
+            (225, 225),
+            screen,
+            (scale_y_off, scale_y_off),
+            (scale_y_on, scale_y_on),
+        ),
+        new_button(
+            open_nick_edit,
+            "def_off.png",
+            "def_off.png",
+            (575, 225),
+            screen,
+            (scale_x_off, scale_y_off),
+            (scale_x_on, scale_y_on),
+            'edit nick'
+        )
+    ]
+
+    y = None
+    while y == None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for button in buttons:
+                    if button.is_focus:
+                        return button.click()
+        screen.fill(BG_COLOR)
+        for button in buttons:
+            button.img()
+            button.draw()
+        pygame.display.flip()
+
+
 def main():
-    defs = [start_menu, host_menu, join_menu, game, bye, join_input_menu, main_settings]
+    defs = [
+        start_menu,
+        host_menu,
+        join_menu,
+        game,
+        bye,
+        join_input_menu,
+        main_settings,
+        nick_settings,
+    ]
     n = defs[0]()
     while True:
-        try:
-            if type(n) is int:
-                n = defs[n]()
-            elif type(n) is tuple:
-                if len(n) == 1:
-                    n = defs[n[0]]()
-                else:
-                    n = defs[n[0]](args=n[1])
-            elif type(n) is str:
-                break
-        except:
-            n = defs[0](args={"text_error": "Неизвестная ошибка!"})
+        # try:
+        if type(n) is int:
+            n = defs[n]()
+        elif type(n) is tuple:
+            if len(n) == 1:
+                n = defs[n[0]]()
+            else:
+                n = defs[n[0]](args=n[1])
+        elif type(n) is str:
+            break
+    # except:
+    #     n = defs[0](args={"text_error": "Неизвестная ошибка!"})
 
 
 main()
